@@ -1,6 +1,4 @@
 // configuration data related to development only
-
-const path = require('path');
 const webpack = require('webpack');
 const merge = require('webpack-merge');
 
@@ -8,56 +6,44 @@ const autoprefixer = require('autoprefixer');
 const postcssImport = require('postcss-import');
 
 const paths = require('./paths');
-const common = require('./webpack.config.common.js');
+const base = require('./webpack.config.base.js');
 
-module.exports = merge(common, {
-  entry: [paths.appIndexJs],
+module.exports = merge(base, {
   mode: 'development',
   // devtool option controls if and how source maps are generated.
   // see https://webpack.js.org/configuration/devtool/
   // If you find that you need more control of source map generation,
   // see https://webpack.js.org/plugins/source-map-dev-tool-plugin/
   devtool: 'eval',
-  plugins: [
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NamedModulesPlugin(),
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify('development'),
-      },
-    }),
-  ],
+  // devtool: '#source-map',                                 //方便断点调试
+  // devtool: '#cheap-module-eval-source-map',            //构建速度快，采用eval执行
   module: {
     rules: [
       {
-        // look for .js or .jsx files
-        test: /\.(js|jsx)$/,
-        // in the `src` directory
-        include: path.resolve(paths.appSrc),
-        exclude: /(node_modules)/,
-        use: {
-          // use babel for transpiling JavaScript files
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/react'],
-          },
-        },
-      },
-      {
         test: /\.module\.s(a|c)ss$/,
-        // in the `src` directory
-        include: [path.resolve(paths.appSrc)],
-        loader: [
+        include: [paths.appSrc],
+        use: [
           'style-loader',
           {
             loader: 'css-loader',
             options: {
-              importLoaders: 1,
+              importLoaders: 1, // 在css中使用@import引入其他文件
               sourceMap: true,
               // This enables local scoped CSS based in CSS Modules spec
               modules: true,
               // generates a unique name for each class (e.g. app__app___2x3cr)
-              localIdentName: '[name]__[local]___[hash:base64:5]',
+              localIdentName: '[name]__[local]__[hash:base64:5]',
+            },
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              sourceMap: true,
+              plugins: () => [
+                postcssImport({ addDependencyTo: webpack }),
+                autoprefixer(),
+              ],
             },
           },
           {
@@ -69,14 +55,18 @@ module.exports = merge(common, {
         ],
       },
       {
-        // look for .css or .scss files
         test: /\.s(a|c)ss$/,
+        include: [paths.appSrc],
         exclude: /\.module.(s(a|c)ss)$/,
-        // in the `src` directory
-        include: [path.resolve(paths.appSrc)],
         use: [
           'style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1, // 在css中使用@import引入其他文件
+              sourceMap: true,
+            },
+          },
           {
             loader: 'postcss-loader',
             options: {
@@ -84,14 +74,7 @@ module.exports = merge(common, {
               sourceMap: true,
               plugins: () => [
                 postcssImport({ addDependencyTo: webpack }),
-                autoprefixer({
-                  browsers: [
-                    '>1%',
-                    'last 4 versions',
-                    'Firefox ESR',
-                    'not ie < 9',
-                  ],
-                }),
+                autoprefixer(),
               ],
             },
           },
@@ -105,5 +88,17 @@ module.exports = merge(common, {
         ],
       },
     ],
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': {
+        NODE_ENV: JSON.stringify('development'),
+      },
+    }),
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NamedModulesPlugin(),
+  ],
+  optimization: {
+    minimize: false,
   },
 });
