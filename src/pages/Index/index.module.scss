@@ -1,0 +1,10 @@
+@import '../../sass/main';
+
+.app {
+  text-align: center;
+  font-size: 2rem;
+
+  .sassyDiv {
+    color: $color-sassy;
+  }
+}

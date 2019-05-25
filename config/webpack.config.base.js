@@ -1,21 +1,22 @@
 // This file will contain configuration data that
 // is shared between development and production builds.
 const path = require('path');
-const webpack = require('webpack');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const paths = require('./paths');
 
+const resolve = dir => path.join(__dirname, '..', dir);
+
 module.exports = {
   entry: {
     // Split vendor code into separate bundles
-    vendor: ['react'],
+    vendor: ['react', 'react-dom'],
     index: paths.appIndexJs,
-    // main: './src/main.js'   //多页面设置直接添加即可，同时plugins需要加上一个新的HtmlWebpackPlugin
+    // main: './src/main.js'   //多页面设置直接添加即可，同时plugins 需要加上一个新的HtmlWebpackPlugin
   },
   output: {
-    filename: '[name].js', //打包后名称
+    filename: '[name].js', // 打包后名称
     /**
      * With zero configuration,
      *   clean-webpack-plugin will remove files inside the directory below
@@ -24,12 +25,12 @@ module.exports = {
     publicPath: '/',
   },
   resolve: {
-    //配合tree-shaking，优先使用es6模块化入口（import
+    // 配合tree-shaking，优先使用es6模块化入口（import
     mainFields: ['jsnext:main', 'browser', 'main'],
     // File extensions. Add others and needed (e.g. scss, json)
     extensions: ['.js', '.jsx'],
     // 指定以下目录寻找第三方模块，避免webpack往父级目录递归搜索
-    modules: ['node_modules'],
+    modules: [resolve('node_modules')],
     // Aliases help with shortening relative paths
     // 'Components/button' === '../../../components/button'
     alias: {
@@ -39,7 +40,7 @@ module.exports = {
   module: {
     // 这些库都是不依赖其它库的库 不需要解析他们可以加快编译速度
     // 忽略未采用模块化的文件，因此jquery 或lodash 将不会被下面的loaders解析
-    noParse: /jquery/, ///jquery|lodash/
+    noParse: [/jquery|chartjs/, /react\.min\.js$/],
     rules: [
       {
         // look for .js or .jsx files
@@ -70,6 +71,7 @@ module.exports = {
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+        include: [paths.appSrc],
         use: [
           {
             loader: 'url-loader',
@@ -136,11 +138,11 @@ module.exports = {
         removeComments: true, // 移除注释
         collapseBooleanAttributes: true, // 省略只有 boolean 值的属性值 例如：readonly checked
       },
-      chunks: ['manifest', 'vendor', 'utils', 'index'], //对应关系，index.js 对应的是index.html
+      chunks: ['manifest', 'vendor', 'utils', 'index'], // 对应关系，index.js 对应的是index.html
     }),
   ],
   optimization: {
-    //提取webpack运行时的代码
+    // 提取webpack运行时的代码
     runtimeChunk: {
       name: 'manifest',
     },
@@ -155,17 +157,17 @@ module.exports = {
       cacheGroups: {
         // 抽离第三方插件
         vendor: {
-          test: /[\\/]node_modules[\\/]/, //指定是node_modules下的第三方包
+          test: /[\\/]node_modules[\\/]/, // 指定是node_modules下的第三方包
           chunks: 'all',
-          name: 'vendor', //打包后的文件名，任意命名
-          priority: 10, //设置优先级，防止和自定义公共代码提取时被覆盖，不进行打包
+          name: 'vendor', // 打包后的文件名，任意命名
+          priority: 10, // 设置优先级，防止和自定义公共代码提取时被覆盖，不进行打包
         },
         // 抽离自己写的公共代码，utils这个名字可以随意起
         utils: {
           chunks: 'all',
           name: 'utils',
-          minSize: 0, //只要超出0字节就生成一个新包
-          minChunks: 2, //至少两个chucks用到
+          minSize: 0, // 只要超出0字节就生成一个新包
+          minChunks: 2, // 至少两个chucks用到
           // maxAsyncRequests: 1,             // 最大异步请求数， 默认1
           maxInitialRequests: 5, // 最大初始化请求书，默认1
         },
